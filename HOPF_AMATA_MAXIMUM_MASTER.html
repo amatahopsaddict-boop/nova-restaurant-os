@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HOPF AMATA Restaurant OS</title>
+<style>
+:root{--ink:#101820;--nav:#17212b;--red:#e5282f;--green:#0ca66c;--gold:#d6a82f;--bg:#f3f5f7;--line:#dfe4e8;--muted:#75808a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Thai",sans-serif;background:var(--bg);color:#17202a}
+button,input,select{font:inherit}.hide{display:none!important}.top{height:58px;background:var(--ink);color:white;display:flex;align-items:center;padding:0 14px;gap:14px;position:sticky;top:0;z-index:20}
+.brand{font-weight:950;letter-spacing:.3px}.grow{flex:1}.pill{border-radius:999px;padding:7px 11px;background:#26323d;font-size:12px}.nav{display:flex;background:white;border-bottom:1px solid var(--line);position:sticky;top:58px;z-index:19}
+.nav button{flex:1;border:0;background:white;padding:12px 4px;font-weight:800}.nav button.on{color:var(--red);border-bottom:3px solid var(--red)}
+.page{padding:12px;max-width:1500px;margin:auto}.card{background:white;border:1px solid var(--line);border-radius:15px;padding:13px;box-shadow:0 2px 10px #00000008}
+.grid{display:grid;gap:10px}.tables{grid-template-columns:repeat(6,1fr)}.table{min-height:78px;border:0;border-radius:14px;color:white;font-weight:900;box-shadow:0 2px 7px #0002}.free{background:#17a86b}.busy{background:#e44343}.ready{background:#2588db}.booked{background:#69737c}
+.zone{margin:14px 0 7px;font-weight:950}.orderLayout{display:grid;grid-template-columns:180px minmax(0,1fr) 360px;gap:10px;min-height:calc(100vh - 122px)}
+.cats button{width:100%;border:0;background:white;text-align:left;padding:13px;border-bottom:1px solid #eee;font-weight:800}.cats button.on{background:#fff0f0;color:#c91f28}
+.search{display:flex;gap:7px;margin-bottom:10px}.search input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px}
+.products{grid-template-columns:repeat(3,1fr)}.product{border:1px solid var(--line);background:white;border-radius:13px;padding:10px;text-align:left;min-height:110px}.product .pic{height:48px;border-radius:9px;background:linear-gradient(135deg,#2c1b12,#b76826);margin-bottom:7px}.price{font-weight:950;color:#d6222a}
+.bill{background:white;border-left:1px solid var(--line);padding:13px;display:flex;flex-direction:column}.billItems{flex:1;overflow:auto;min-height:150px}.row{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #eee}.btn{border:0;border-radius:10px;padding:12px;font-weight:950}.btn.red{background:var(--red);color:white}.btn.green{background:var(--green);color:white}.btn.dark{background:#26323d;color:white}.btn.gold{background:#e4b23c}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.kdsTabs{display:flex;gap:7px;margin-bottom:10px}.tickets{grid-template-columns:repeat(3,1fr)}.ticket{border-top:5px solid var(--red)}.ticket.readyT{border-top-color:var(--green)}
+.statGrid{grid-template-columns:repeat(4,1fr)}.big{font-size:28px;font-weight:950}.muted{color:var(--muted);font-size:12px}
+.list{width:100%;border-collapse:collapse}.list th,.list td{text-align:left;padding:9px;border-bottom:1px solid #eee}.modal{position:fixed;inset:0;background:#0008;z-index:50;display:grid;place-items:center;padding:16px}.modalBox{background:white;border-radius:18px;padding:18px;width:min(480px,100%)}.paygrid{grid-template-columns:repeat(2,1fr)}
+.bottomCart{display:none;position:fixed;right:16px;bottom:75px;z-index:30;border:0;border-radius:999px;background:var(--red);color:white;padding:14px 17px;font-weight:950;box-shadow:0 5px 20px #0005}
+@media(max-width:900px){.tables{grid-template-columns:repeat(4,1fr)}.orderLayout{grid-template-columns:105px 1fr}.bill{display:none;position:fixed;inset:58px 0 0 0;z-index:40}.bill.open{display:flex}.products{grid-template-columns:repeat(2,1fr)}.bottomCart{display:block}.tickets{grid-template-columns:1fr}.statGrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.tables{grid-template-columns:repeat(3,1fr)}.orderLayout{grid-template-columns:92px 1fr}.page{padding:8px}.products{grid-template-columns:repeat(2,1fr)}.product{min-height:100px;padding:8px}.top{height:54px}.nav{top:54px}.nav button{font-size:11px}.brand{font-size:13px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand">HOPF AMATA POS</div><div class="grow"></div><span class="pill" id="who">OWNER</span><span class="pill" id="shift">SHIFT OPEN</span></header>
+<nav class="nav"><button data-v="floor" class="on">โต๊ะ</button><button data-v="order">ออเดอร์</button><button data-v="kds">ครัว / บาร์</button><button data-v="cashier">แคชเชียร์</button><button data-v="admin">หลังบ้าน</button></nav>
+
+<section id="floor" class="page view"><h2>แผนผังโต๊ะ</h2><div class="muted">เขียว = ว่าง · แดง = ใช้งาน · ฟ้า = พร้อมเสิร์ฟ</div><div id="floorZones"></div></section>
+
+<section id="order" class="view hide">
+<div class="orderLayout">
+<aside class="cats" id="cats"></aside>
+<main class="page"><div class="search"><input id="q" placeholder="ค้นหาเมนู..." oninput="renderProducts()"><button class="btn dark" onclick="go('floor')">ผังโต๊ะ</button></div><div id="products" class="grid products"></div></main>
+<aside class="bill" id="billPanel"><h3 id="billHead">ยังไม่ได้เลือกโต๊ะ</h3><div class="muted" id="billMeta"></div><div id="billItems" class="billItems"></div><div class="row"><b>รวม</b><b id="billTotal">฿0</b></div><div class="actions"><button class="btn red" onclick="send()">ส่งครัว / บาร์</button><button class="btn green" onclick="openPay()">เช็กบิล / ชำระเงิน</button></div><button class="btn dark" style="margin-top:7px" onclick="toggleBill(false)">ปิดรายการ</button></aside>
+</div><button class="bottomCart" onclick="toggleBill(true)">บิล <span id="cartCount">0</span></button>
+</section>
+
+<section id="kds" class="page view hide"><h2>KDS ครัว / บาร์</h2><div class="kdsTabs"><button class="btn dark" onclick="kStation='ALL';renderKDS()">ทั้งหมด</button><button class="btn gold" onclick="kStation='KITCHEN';renderKDS()">ครัว</button><button class="btn green" onclick="kStation='BAR';renderKDS()">บาร์</button></div><div id="tickets" class="grid tickets"></div></section>
+
+<section id="cashier" class="page view hide"><h2>Cashier</h2><div id="cashBills" class="grid tickets"></div></section>
+
+<section id="admin" class="page view hide"><h2>Back Office</h2><div id="stats" class="grid statGrid"></div><h3>Stock / BOM</h3><div id="stock" class="grid statGrid"></div><h3>Audit Log</h3><div class="card"><table class="list"><tbody id="audit"></tbody></table></div></section>
+
+<div id="payModal" class="modal hide"><div class="modalBox"><h2>ชำระเงิน <span id="payTable"></span></h2><div class="row"><b>ยอดรวม</b><b class="big" id="payTotal"></b></div><div class="grid paygrid"><button class="btn green" onclick="pay('CASH')">เงินสด</button><button class="btn dark" onclick="pay('QR')">QR PromptPay</button><button class="btn dark" onclick="pay('CARD')">บัตรเครดิต</button><button class="btn dark" onclick="pay('TRANSFER')">โอนเงิน</button></div><button class="btn" style="width:100%;margin-top:8px" onclick="payModal.classList.add('hide')">ยกเลิก</button></div></div>
+
+<script>
+const KEY='hopf_amata_big_master_v1';
+const catsData=['แนะนำ','อาหาร','กับแกล้ม','พิซซ่า','สเต็ก','เครื่องดื่ม','เบียร์'];
+const productsSeed=[
+['ribeye','Ribeye Steak',450,'สเต็ก','KITCHEN'],['ribs','BBQ Ribs',380,'อาหาร','KITCHEN'],['pizza','Pizza Salmon L',189,'พิซซ่า','KITCHEN'],['pork','Spicy Pork Neck',160,'กับแกล้ม','KITCHEN'],['fries','French Fries',120,'กับแกล้ม','KITCHEN'],['ipa','IPA 500 ml',220,'เบียร์','BAR'],['lager','Lager 500 ml',180,'เบียร์','BAR'],['weizen','Weizen Dunkel 500 ml',220,'เบียร์','BAR'],['stout','Stout 500 ml',220,'เบียร์','BAR']];
+function fresh(){let tables=[];for(let i=1;i<=24;i++)tables.push({id:'T'+i,zone:'โซนหลัก',status:'FREE'});for(let i=1;i<=6;i++)tables.push({id:'C'+i,zone:'Zone C',status:'FREE'});for(let i=1;i<=6;i++)tables.push({id:'S'+i,zone:'Outdoor',status:'FREE'});for(let i=1;i<=3;i++)tables.push({id:'Room '+i,zone:'VIP Room',status:'FREE'});return{tables,products:productsSeed.map(x=>({id:x[0],name:x[1],price:x[2],cat:x[3],station:x[4],active:true})),bills:[],kds:[],payments:[],stock:Object.fromEntries(productsSeed.map(x=>[x[0],50])),audit:[],shift:{status:'OPEN',openingCash:0}}}
+let D=JSON.parse(localStorage.getItem(KEY)||'null')||fresh(),selected=null,cat='แนะนำ',kStation='ALL';
+function save(action,detail){if(action)D.audit.unshift({at:new Date().toLocaleString('th-TH'),action,detail});localStorage.setItem(KEY,JSON.stringify(D));renderAll()}
+function uid(p){return p+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,6)}
+function active(t){return D.bills.find(b=>b.table===t&&!['PAID','VOID'].includes(b.status))}
+function bill(){return selected?active(selected):null}
+function go(v){document.querySelectorAll('.view').forEach(x=>x.classList.add('hide'));document.getElementById(v).classList.remove('hide');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));if(v==='order')renderOrder();if(v==='kds')renderKDS();if(v==='cashier')renderCashier();if(v==='admin')renderAdmin()}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+function openTable(t){selected=t;let b=active(t);if(!b){let pax=Number(prompt('จำนวนลูกค้า (PAX)','2')||2);b={id:uid('BILL'),table:t,pax,status:'OPEN',items:[],draft:[],openedAt:Date.now(),discount:0};D.bills.push(b);D.tables.find(x=>x.id===t).status='BUSY';save('OPEN BILL',t+' PAX '+pax)}go('order')}
+function renderFloor(){let zones=['โซนหลัก','Zone C','Outdoor','VIP Room'];floorZones.innerHTML=zones.map(z=>`<div class="zone">${z}</div><div class="grid tables">${D.tables.filter(t=>t.zone===z).map(t=>`<button class="table ${t.status==='FREE'?'free':t.status==='READY'?'ready':t.status==='BOOKED'?'booked':'busy'}" onclick="openTable('${t.id}')">${t.id}<br><small>${t.status}</small></button>`).join('')}</div>`).join('')}
+function renderCats(){cats.innerHTML=catsData.map(c=>`<button class="${cat===c?'on':''}" onclick="cat='${c}';renderCats();renderProducts()">${c}</button>`).join('')}
+function renderProducts(){let s=(q.value||'').toLowerCase(),xs=D.products.filter(p=>p.active&&(cat==='แนะนำ'||p.cat===cat)&&p.name.toLowerCase().includes(s));products.innerHTML=xs.map(p=>`<button class="product" onclick="add('${p.id}')"><div class="pic"></div><b>${p.name}</b><div class="muted">${p.cat} · ${p.station==='BAR'?'บาร์':'ครัว'}</div><div class="price">฿${p.price}</div></button>`).join('')}
+function add(id){let b=bill();if(!b)return alert('เลือกโต๊ะก่อน');let p=D.products.find(x=>x.id===id),x=b.draft.find(x=>x.productId===id);if(x)x.qty++;else b.draft.push({id:uid('D'),productId:id,name:p.name,price:p.price,station:p.station,qty:1,modifier:'',comment:''});save();renderOrder()}
+function renderOrder(){renderCats();renderProducts();let b=bill();billHead.textContent=b?`โต๊ะ ${b.table}`:'ยังไม่ได้เลือกโต๊ะ';billMeta.textContent=b?`PAX ${b.pax} · ${b.id}`:'';let xs=b?[...b.items,...b.draft]:[];billItems.innerHTML=xs.map(x=>`<div class="row"><span>${x.qty}× ${x.name}<br><small class="muted">${x.status||'DRAFT'}</small></span><b>฿${x.price*x.qty}</b></div>`).join('')||'<p class="muted">ยังไม่มีรายการ</p>';let sum=xs.reduce((s,x)=>s+x.price*x.qty,0);billTotal.textContent='฿'+sum.toLocaleString();cartCount.textContent=b?b.draft.reduce((s,x)=>s+x.qty,0):0}
+function send(){let b=bill();if(!b||!b.draft.length)return alert('ไม่มีรายการใหม่');let batch=uid('ORD');b.draft.forEach(x=>{x.status='SENT';x.batch=batch;b.items.push(x);D.kds.push({id:uid('KDS'),billId:b.id,table:b.table,name:x.name,qty:x.qty,station:x.station,status:'NEW',at:Date.now()});D.stock[x.productId]=(D.stock[x.productId]||0)-x.qty});b.draft=[];b.status='ORDERED';D.tables.find(x=>x.id===b.table).status='BUSY';save('SEND ORDER',b.table+' '+batch);alert('ส่ง KDS ครัว / บาร์แล้ว')}
+function toggleBill(x){billPanel.classList.toggle('open',x)}
+function renderKDS(){let xs=D.kds.filter(x=>x.status!=='SERVED'&&(kStation==='ALL'||x.station===kStation));tickets.innerHTML=xs.map(x=>`<div class="card ticket ${x.status==='READY'?'readyT':''}"><div class="row"><b>#${x.id.slice(-4)}</b><b>${x.table}</b></div><div class="muted">${x.station} · ${x.status}</div><h3>${x.qty} × ${x.name}</h3><button class="btn ${x.status==='READY'?'green':'gold'}" style="width:100%" onclick="nextK('${x.id}')">${x.status==='NEW'?'รับออเดอร์':x.status==='ACCEPTED'?'เริ่มทำ':x.status==='COOKING'?'พร้อมเสิร์ฟ':'เสิร์ฟแล้ว'}</button></div>`).join('')||'<div class="card">ไม่มีออเดอร์ค้าง</div>'}
+function nextK(id){let x=D.kds.find(q=>q.id===id);x.status=x.status==='NEW'?'ACCEPTED':x.status==='ACCEPTED'?'COOKING':x.status==='COOKING'?'READY':'SERVED';let b=D.bills.find(q=>q.id===x.billId);if(x.status==='READY'){b.status='READY';D.tables.find(t=>t.id===b.table).status='READY'}save('KDS '+x.status,x.table+' '+x.name);renderKDS()}
+function total(b){return b.items.reduce((s,x)=>s+x.price*x.qty,0)-Number(b.discount||0)}
+function openPay(){let b=bill();if(!b||!b.items.length)return alert('ยังไม่มีรายการที่ส่งแล้ว');payTable.textContent='โต๊ะ '+b.table;payTotal.textContent='฿'+total(b).toLocaleString();payModal.classList.remove('hide')}
+function pay(method){let b=bill();if(!b)return;let amount=total(b);D.payments.push({id:uid('PAY'),billId:b.id,table:b.table,method,amount,at:Date.now()});b.status='PAID';D.tables.find(x=>x.id===b.table).status='FREE';payModal.classList.add('hide');save('PAY '+method,b.table+' ฿'+amount);selected=null;go('floor')}
+function renderCashier(){let xs=D.bills.filter(b=>!['PAID','VOID'].includes(b.status));cashBills.innerHTML=xs.map(b=>`<div class="card"><div class="row"><h3>${b.table}</h3><b>฿${total(b).toLocaleString()}</b></div><div class="muted">PAX ${b.pax} · ${b.status}</div><button class="btn green" style="width:100%;margin-top:8px" onclick="selected='${b.table}';openPay()">ชำระเงิน</button></div>`).join('')||'<div class="card">ไม่มีบิลเปิด</div>'}
+function renderAdmin(){let sales=D.payments.reduce((s,x)=>s+x.amount,0),open=D.bills.filter(b=>!['PAID','VOID'].includes(b.status)).length;stats.innerHTML=`<div class="card"><div class="muted">ยอดขาย</div><div class="big">฿${sales.toLocaleString()}</div></div><div class="card"><div class="muted">บิลชำระแล้ว</div><div class="big">${D.payments.length}</div></div><div class="card"><div class="muted">บิลเปิด</div><div class="big">${open}</div></div><div class="card"><div class="muted">KDS ค้าง</div><div class="big">${D.kds.filter(x=>x.status!=='SERVED').length}</div></div>`;stock.innerHTML=D.products.map(p=>`<div class="card"><b>${p.name}</b><div class="big">${D.stock[p.id]??0}</div><div class="muted">คงเหลือจำลอง / BOM</div></div>`).join('');audit.innerHTML=D.audit.slice(0,50).map(a=>`<tr><td>${a.at}</td><td><b>${a.action}</b><br><span class="muted">${a.detail||''}</span></td></tr>`).join('')}
+function renderAll(){renderFloor();renderOrder();renderKDS();renderCashier();renderAdmin()}
+window.addEventListener('storage',e=>{if(e.key===KEY){D=JSON.parse(e.newValue);renderAll()}})
+renderAll();
+</script>
+
+<!-- HOPF MAXIMUM MASTER EXTENSION -->
+<style>
+#maxPanel{position:fixed;inset:70px 10px 10px 10px;z-index:80;background:#f4f6f8;border:1px solid #ccd3d9;border-radius:18px;overflow:auto;box-shadow:0 20px 60px #0007}
+.mxTop{position:sticky;top:0;background:#101820;color:#fff;padding:13px;display:flex;gap:8px;align-items:center;z-index:2}.mxTop button{margin-left:auto}
+.mxTabs{display:flex;gap:6px;overflow:auto;padding:10px;background:#fff;border-bottom:1px solid #ddd}.mxTabs button{white-space:nowrap;border:0;padding:10px;border-radius:9px;font-weight:800}
+.mxBody{padding:12px}.mxGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.mxCard{background:#fff;border:1px solid #dde3e8;border-radius:14px;padding:13px}.mxCard input,.mxCard select,.mxCard textarea{width:100%;padding:9px;margin:5px 0;border:1px solid #d8dde2;border-radius:8px}
+.mxTable{width:100%;border-collapse:collapse}.mxTable td,.mxTable th{padding:8px;border-bottom:1px solid #eee;text-align:left}.mxBadge{padding:4px 8px;border-radius:999px;background:#eef1f4;font-size:11px;font-weight:800}
+</style>
+<button id="maxBtn" style="position:fixed;left:12px;bottom:14px;z-index:75;background:#d6a82f;border:0;border-radius:999px;padding:13px 16px;font-weight:950;box-shadow:0 5px 20px #0004" onclick="MX.open()">⚙ MASTER+</button>
+<div id="maxPanel" class="hide">
+ <div class="mxTop"><b>HOPF AMATA — MASTER CONTROL</b><span class="mxBadge" id="mxRole">OWNER</span><button class="btn red" onclick="MX.close()">ปิด</button></div>
+ <div class="mxTabs" id="mxTabs"></div><div class="mxBody" id="mxBody"></div>
+</div>
+<script>
+const MXKEY='hopf_maximum_extension_v1';
+const MX={
+ data:JSON.parse(localStorage.getItem(MXKEY)||'null')||{
+  staff:[{id:'E001',name:'Owner',pin:'1234',role:'OWNER'},{id:'E002',name:'Manager',pin:'2222',role:'MANAGER'},{id:'E003',name:'Cashier',pin:'1111',role:'CASHIER'},{id:'E004',name:'Waiter',pin:'3333',role:'WAITER'},{id:'E005',name:'Kitchen',pin:'4444',role:'KITCHEN'}],
+  session:{employee:'E001',role:'OWNER',locked:false},shift:{status:'OPEN',opening:0,openedAt:Date.now()},
+  members:[],reservations:[],refunds:[],voids:[],invoices:[],
+  config:{vat:7,vatMode:'INCLUDED',service:0,printer:'ESC/POS Bridge not connected',taxEndpoint:'',reservationEndpoint:'',inactivityLock:120},
+  pizza:{faces:[['Salmon',0],['Margherita',0],['Hawaiian',0],['Parma Ham',80],['Seafood',100]],toppings:[['Extra Cheese',40],['Bacon',60],['Mushroom',30],['Olive',30]]},
+  partySets:[{name:'HOPF PARTY SET',price:999,choices:['Pizza','French Fries','BBQ Ribs'],active:true}]
+ },
+ save(){localStorage.setItem(MXKEY,JSON.stringify(this.data))},
+ open(){maxPanel.classList.remove('hide');this.tab('dashboard')},close(){maxPanel.classList.add('hide')},
+ tabs:[['dashboard','Dashboard'],['login','Staff/PIN'],['shift','Shift'],['modifier','Modifier/Pizza'],['split','Split/Payment'],['member','Member/HOPF POINT'],['booking','Reservation'],['tax','VAT/Tax'],['printer','Printer'],['void','Void/Refund'],['stockx','Stock/BOM'],['reportx','Reports'],['settings','Settings']],
+ tab(k){mxTabs.innerHTML=this.tabs.map(x=>`<button onclick="MX.tab('${x[0]}')" style="${x[0]===k?'background:#101820;color:#fff':'background:#eef1f4'}">${x[1]}</button>`).join('');this.render(k)},
+ render(k){
+  const b=this.data;
+  if(k==='dashboard')mxBody.innerHTML=`<div class="mxGrid">${[
+   ['SESSION',b.session.role],['SHIFT',b.shift.status],['MEMBERS',b.members.length],['RESERVATIONS',b.reservations.length],
+   ['VAT',b.config.vat+'%'],['SERVICE',b.config.service+'%'],['VOID/REFUND',b.voids.length+'/'+b.refunds.length],['PRINTER',b.config.printer]
+  ].map(x=>`<div class="mxCard"><div class="muted">${x[0]}</div><div class="big">${x[1]}</div></div>`).join('')}</div><div class="mxCard" style="margin-top:10px"><b>Core Flow</b><p>Employee → Login → Open Shift → Floor → Table → Bill → Order Batch → KDS → Check Bill → Payment → Receipt/Tax → Close Bill → Report → Close Shift</p></div>`;
+  if(k==='login')mxBody.innerHTML=`<div class="mxCard"><h3>พนักงาน / Role / PIN</h3><table class="mxTable"><tr><th>ชื่อ</th><th>Role</th><th>PIN Demo</th></tr>${b.staff.map(x=>`<tr><td>${x.name}</td><td>${x.role}</td><td>${x.pin}</td></tr>`).join('')}</table><input id="mxPin" placeholder="PIN"><button class="btn dark" onclick="MX.login()">Login / Change Employee</button><p class="muted">Normal POS session จะไม่ถาม PIN ซ้ำ; re-auth ใช้กับ Void/Refund/Price Override/Settings</p></div>`;
+  if(k==='shift')mxBody.innerHTML=`<div class="mxGrid"><div class="mxCard"><h3>กะปัจจุบัน</h3><div class="big">${b.shift.status}</div><label>เงินเปิดกะ</label><input id="mxOpening" type="number" value="${b.shift.opening||0}"><button class="btn green" onclick="MX.openShift()">เปิดกะ</button> <button class="btn red" onclick="MX.closeShift()">ปิดกะ</button></div><div class="mxCard"><b>กฎ</b><p>ปิดกะได้เมื่อไม่มีบิลเปิด และต้องสรุปเงินสดจริงเทียบ Expected Cash</p></div></div>`;
+  if(k==='modifier')mxBody.innerHTML=`<div class="mxGrid"><div class="mxCard"><h3>Pizza Half & Half</h3>${b.pizza.faces.map(x=>`<div class="row"><span>${x[0]}</span><b>${x[1]?'+฿'+x[1]:'฿0'}</b></div>`).join('')}</div><div class="mxCard"><h3>Toppings</h3>${b.pizza.toppings.map(x=>`<div class="row"><span>${x[0]}</span><b>+฿${x[1]}</b></div>`).join('')}</div><div class="mxCard"><h3>Party Set</h3>${b.partySets.map(x=>`<b>${x.name} ฿${x.price}</b><p>${x.choices.join(' · ')}</p><span class="muted">Choice base = ฿0, upgrades/toppings add only</span>`).join('')}</div></div>`;
+  if(k==='split')mxBody.innerHTML=`<div class="mxCard"><h3>Split Bill ≠ Split Payment</h3><p><b>Split Bill:</b> แยกรายการ/จำนวนจาก Bill ไป Bill ใหม่</p><p><b>Split Payment:</b> Bill เดิม แต่รับเงินหลายช่องทาง/หลายครั้ง</p><div class="mxGrid">${['CASH','QR','CARD','TRANSFER','WALLET','OTHER'].map(x=>`<div class="mxCard"><b>${x}</b></div>`).join('')}</div><p class="muted">BIG MASTER ปัจจุบันชำระเต็มบิล; โมดูลนี้ล็อกโครงสำหรับ partial allocation รอบ cloud backend</p></div>`;
+  if(k==='member')mxBody.innerHTML=`<div class="mxGrid"><div class="mxCard"><h3>HOPF POINT</h3><p>ทุก 250 บาท = 1 คะแนน</p><p>Game: 10 Game Points = 1 HOPF POINT</p><input id="memPhone" placeholder="เบอร์โทร"><input id="memName" placeholder="ชื่อ"><button class="btn green" onclick="MX.addMember()">เพิ่มสมาชิก</button></div><div class="mxCard"><h3>สมาชิก</h3>${b.members.map(x=>`<div class="row"><span>${x.name}<br><small>${x.phone}</small></span><b>${x.points} pt</b></div>`).join('')||'ยังไม่มีสมาชิก'}</div></div>`;
+  if(k==='booking')mxBody.innerHTML=`<div class="mxGrid"><div class="mxCard"><h3>Reservation</h3><input id="rName" placeholder="ชื่อลูกค้า"><input id="rPhone" placeholder="เบอร์โทร"><input id="rDate" type="date"><input id="rTime" type="time"><input id="rTable" placeholder="โต๊ะ เช่น T10"><input id="rPax" type="number" placeholder="PAX"><button class="btn green" onclick="MX.reserve()">บันทึกจอง</button></div><div class="mxCard">${b.reservations.map(x=>`<div class="row"><span>${x.date} ${x.time}<br>${x.name} · ${x.phone}</span><b>${x.table}</b></div>`).join('')||'ยังไม่มีการจอง'}</div></div>`;
+  if(k==='tax')mxBody.innerHTML=`<div class="mxGrid"><div class="mxCard"><h3>VAT / Service</h3><label>VAT %</label><input id="cfgVat" type="number" value="${b.config.vat}"><label>Service %</label><input id="cfgSvc" type="number" value="${b.config.service}"><select id="cfgVatMode"><option ${b.config.vatMode==='INCLUDED'?'selected':''}>INCLUDED</option><option ${b.config.vatMode==='EXCLUDED'?'selected':''}>EXCLUDED</option></select><button class="btn dark" onclick="MX.saveTax()">บันทึก</button></div><div class="mxCard"><h3>ใบกำกับภาษี</h3><input placeholder="ชื่อบริษัท"><input placeholder="เลขผู้เสียภาษี"><textarea placeholder="ที่อยู่บริษัท"></textarea><p class="muted">ยังไม่เชื่อม endpoint จริง จึงไม่อ้างว่าส่ง/ออกเอกสารออนไลน์สำเร็จ</p></div></div>`;
+  if(k==='printer')mxBody.innerHTML=`<div class="mxCard"><h3>Printer / Cash Drawer</h3><p>${b.config.printer}</p><select><option>USB</option><option>Bluetooth</option><option>Wi-Fi / LAN</option></select><button class="btn dark" onclick="alert('ต้องมี ESC/POS bridge/driver บนอุปกรณ์จริง')">Test Print</button><p class="muted">Static GitHub Pages ไม่สามารถควบคุมเครื่องพิมพ์/ลิ้นชักโดยตรงได้ ต้องมี bridge หรือ backend</p></div>`;
+  if(k==='void')mxBody.innerHTML=`<div class="mxGrid"><div class="mxCard"><h3>Void / Refund</h3><input id="vReason" placeholder="เหตุผล"><button class="btn red" onclick="MX.priv('VOID')">VOID</button> <button class="btn dark" onclick="MX.priv('REFUND')">REFUND</button><p class="muted">ต้อง Manager/Owner re-auth และเก็บ Audit; production ต้อง reverse stock movement ตามรายการ</p></div><div class="mxCard"><b>VOID ${b.voids.length}</b><br><b>REFUND ${b.refunds.length}</b></div></div>`;
+  if(k==='stockx')mxBody.innerHTML=`<div class="mxCard"><h3>Recipe / BOM / Stock Movement</h3><p>Sale Send → ISSUE stock · Void/Cancel → REVERSAL · Receive → IN · Waste → OUT</p><p class="muted">ไม่ลบยอดสต๊อกย้อนหลังแบบ destructive; ทุก movement ต้อง trace กลับ Bill/Item ได้</p></div>`;
+  if(k==='reportx')mxBody.innerHTML=`<div class="mxGrid">${['Daily Net Sales','Bill Count / Average Bill','Payment Method','Category / Best Seller','Discount / Void / Refund','VAT / Service','Shift Cash','Open Bills'].map(x=>`<div class="mxCard"><b>${x}</b><p class="muted">Report module</p></div>`).join('')}</div>`;
+  if(k==='settings')mxBody.innerHTML=`<div class="mxGrid"><div class="mxCard"><h3>Connector Config</h3><label>Tax endpoint</label><input id="taxEp" value="${b.config.taxEndpoint}"><label>Reservation endpoint</label><input id="resEp" value="${b.config.reservationEndpoint}"><label>Inactivity lock (min)</label><input id="lockMin" type="number" value="${b.config.inactivityLock}"><button class="btn dark" onclick="MX.settings()">บันทึก</button></div><div class="mxCard"><h3>Deployment</h3><p><b>GitHub Pages:</b> UI / static demo</p><p><b>Production:</b> Node + SQLite/Postgres + Socket.IO/Firebase + printer bridge</p></div></div>`;
+ },
+ login(){let u=this.data.staff.find(x=>x.pin===mxPin.value);if(!u)return alert('PIN ไม่ถูกต้อง');this.data.session={employee:u.id,role:u.role,locked:false};mxRole.textContent=u.role;this.save();this.tab('dashboard')},
+ openShift(){this.data.shift={status:'OPEN',opening:Number(mxOpening.value||0),openedAt:Date.now()};this.save();this.tab('shift')},
+ closeShift(){let openBills=(window.D?.bills||[]).filter(x=>!['PAID','VOID'].includes(x.status)).length;if(openBills)return alert('ยังมี '+openBills+' บิลเปิดอยู่');this.data.shift.status='CLOSED';this.data.shift.closedAt=Date.now();this.save();this.tab('shift')},
+ addMember(){if(!memPhone.value)return alert('กรอกเบอร์โทร');this.data.members.push({id:'M'+Date.now(),phone:memPhone.value,name:memName.value||'Member',points:0});this.save();this.tab('member')},
+ reserve(){this.data.reservations.push({id:'R'+Date.now(),name:rName.value,phone:rPhone.value,date:rDate.value,time:rTime.value,table:rTable.value,pax:Number(rPax.value||1)});if(window.D){let t=D.tables.find(x=>x.id===rTable.value);if(t)t.status='BOOKED';save('RESERVATION',rTable.value)}this.save();this.tab('booking')},
+ saveTax(){this.data.config.vat=Number(cfgVat.value||0);this.data.config.service=Number(cfgSvc.value||0);this.data.config.vatMode=cfgVatMode.value;this.save();this.tab('tax')},
+ priv(kind){let pin=prompt('Manager / Owner PIN');let u=this.data.staff.find(x=>x.pin===pin&&['OWNER','MANAGER'].includes(x.role));if(!u)return alert('ไม่มีสิทธิ์');let rec={id:kind+Date.now(),reason:vReason.value||'No reason',by:u.id,at:Date.now()};this.data[kind==='VOID'?'voids':'refunds'].push(rec);this.save();this.tab('void')},
+ settings(){this.data.config.taxEndpoint=taxEp.value;this.data.config.reservationEndpoint=resEp.value;this.data.config.inactivityLock=Number(lockMin.value||120);this.save();this.tab('settings')}
+};MX.save();
+</script>
+
+</body></html>
