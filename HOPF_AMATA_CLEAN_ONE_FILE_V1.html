@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HOPFADDICT AMATA POS — Clean Core</title>
+<style>
+:root{--bg:#071522;--panel:#0d2032;--panel2:#10283f;--gold:#e8bf63;--text:#f6f8fb;--muted:#9fb0c1;--line:#203b55;--ok:#19a86b;--warn:#ef9d24;--bad:#d94b4b;--paper:#f7f8fa;--ink:#13202d}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Thai",sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+button,input,select{font:inherit}.hidden{display:none!important}.app{height:100vh;display:flex;flex-direction:column}
+header{height:72px;display:flex;align-items:center;padding:0 18px;background:#061321;border-bottom:1px solid #6d572b;gap:16px}
+.brand{font-size:23px;font-weight:900;color:var(--gold);letter-spacing:.8px}.brand small{display:block;font-size:10px;color:white;letter-spacing:2px}
+.spacer{flex:1}.status{font-size:12px;color:#bcd0df}.dot{color:#2fd17c}
+.screen{display:none;flex:1;min-height:0}.screen.active{display:flex}
+.nav{width:128px;background:#061426;border-right:1px solid var(--line);padding:10px 7px;display:flex;flex-direction:column;gap:6px}
+.nav button,.btn{border:0;border-radius:10px;padding:12px;font-weight:800;cursor:pointer}.nav button{background:transparent;color:#dce6ef;text-align:left}.nav button.active{background:linear-gradient(135deg,#f3d17b,#c99a3d);color:#071522}
+.main{flex:1;overflow:auto;padding:14px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.floorTop,.tabs,.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tabs button{background:#102a43;color:#fff;border:1px solid #27445f}.tabs button.active{background:var(--gold);color:#081522}
+.floor{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:12px;margin-top:14px}
+.table{min-height:100px;border:2px solid #2e9c75;background:#f5f7f8;color:#17212b;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;cursor:pointer}
+.table.OPEN,.table.ORDERED,.table.COOKING{border-color:var(--warn);background:#fff6e6}.table.READY{border-color:var(--ok);background:#e8fff5}.table.BILLING{border-color:#3b78d8;background:#eef5ff}
+.table small{font-weight:600;color:#667}
+.pos{display:grid;grid-template-columns:128px 1fr 410px;width:100%;min-height:0}.posCenter{overflow:auto;padding:13px}.categories{display:flex;gap:8px;overflow:auto;margin-bottom:12px}.categories button{white-space:nowrap;background:#102a43;color:#fff;border:1px solid #27445f;border-radius:10px;padding:12px}.categories button.active{background:var(--gold);color:#071522}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.product{min-height:145px;background:linear-gradient(160deg,#163451,#0b1c2d);border:1px solid #66552f;border-radius:13px;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer}.product b{font-size:15px}.price{font-size:20px;color:var(--gold);font-weight:900}
+.cart{background:var(--paper);color:var(--ink);padding:12px;overflow:auto}.cartHead{display:flex;gap:8px}.pill{padding:10px 12px;background:#edd084;border-radius:9px;font-weight:900}.cartRows{margin-top:10px}.cartRow{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 3px;border-bottom:1px solid #dfe3e7}.cartRow small{display:block;color:#667}.qty{display:flex;align-items:center;gap:7px}.qty button{width:30px;height:30px;border:1px solid #ccd3da;background:white;border-radius:8px}.note{width:100%;margin-top:6px;border:1px solid #d6dce2;border-radius:8px;padding:7px}
+.total{margin-top:12px;background:#07182a;color:white;border-radius:10px;padding:14px;display:flex;justify-content:space-between;font-size:21px;font-weight:900}.pay{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}.pay button{padding:14px 4px;border:0;border-radius:9px;font-weight:900}.cash{background:#16a96a;color:white}.qr{background:#176fe5;color:white}.card{background:#17283b;color:white}.split{background:#eac66d}
+.send{width:100%;margin-top:10px;background:var(--gold);color:#081522;font-size:17px}
+.kitchen{width:100%;display:flex;flex-direction:column}.kbar{padding:10px 14px;background:#fff;color:#13202d;display:flex;gap:8px;align-items:center;border-bottom:1px solid #ddd}.kbar button{background:#eef1f4}.kbar button.active{background:#17283b;color:#fff}.kgrid{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;overflow:auto}.ticket{background:white;color:#17212b;border-radius:12px;padding:12px;border-left:5px solid var(--warn)}.ticket.READY{border-left-color:var(--ok)}.ticket h3{margin:0 0 4px}.station{font-weight:900}.age{font-weight:900;color:#b76800}.ticket button{margin-top:8px}.bo{width:100%;padding:18px;overflow:auto}.boGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.boCard{padding:15px}.formrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.formrow input,.formrow select{padding:9px;border-radius:8px;border:1px solid #38516a;background:#071827;color:white}
+.listrow{display:grid;grid-template-columns:1fr 100px 140px 80px;gap:7px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+@media(max-width:1000px){.floor{grid-template-columns:repeat(4,1fr)}.pos{grid-template-columns:100px 1fr 350px}.nav{width:100px}}
+@media print{body>*{display:none!important}#printArea{display:block!important;color:#000;background:#fff;font-family:monospace;padding:5mm;width:76mm}#printArea *{display:block!important}.pLine{border-top:1px dashed #000;margin:6px 0}}
+#printArea{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">HOPFADDICT<small>AMATA POS · CLEAN BUILD</small></div><div id="context"></div><div class="spacer"></div><div class="status"><span class="dot">●</span> เครื่องหลัก · <span id="clock"></span></div></header>
+
+<section id="floorScreen" class="screen active">
+ <aside class="nav"><button class="active">▦ ผังโต๊ะ</button><button onclick="showPOS()">🍴 หน้าขาย</button><button onclick="showKitchen()">👨‍🍳 ครัว</button><button onclick="showBO()">⚙ หลังบ้าน</button></aside>
+ <main class="main"><div class="floorTop"><h2 style="margin:0">ผังโต๊ะ</h2><div class="tabs" id="zoneTabs"></div><div class="spacer"></div><span>เขียว=ว่าง · ส้ม=มีออเดอร์ · เขียวอ่อน=พร้อมเสิร์ฟ</span></div><div class="floor" id="floor"></div></main>
+</section>
+
+<section id="posScreen" class="screen">
+ <div class="pos">
+  <aside class="nav"><button onclick="showFloor()">▦ ผังโต๊ะ</button><button class="active">🍴 หน้าขาย</button><button onclick="showKitchen()">👨‍🍳 ครัว</button><button onclick="showBO()">⚙ หลังบ้าน</button></aside>
+  <main class="posCenter"><div class="categories" id="cats"></div><div class="products" id="products"></div></main>
+  <aside class="cart">
+   <div class="cartHead"><div class="pill">โต๊ะ <span id="cartTable">-</span></div><div class="pill">👤 <span id="pax">-</span></div><div class="spacer"></div><button class="btn" onclick="setPax()">แก้ Pax</button></div>
+   <div class="cartRows" id="cartRows"></div>
+   <button class="btn send" onclick="sendOrder()">ส่งออเดอร์เข้าครัว</button>
+   <div class="total"><span>ยอดรวม</span><span id="total">0.-</span></div>
+   <div class="pay"><button class="cash" onclick="pay('CASH')">เงินสด</button><button class="qr" onclick="pay('QR')">QR</button><button class="card" onclick="pay('CARD')">บัตร</button><button class="split" onclick="splitPay()">แบ่งจ่าย</button></div>
+  </aside>
+ </div>
+</section>
+
+<section id="kitchenScreen" class="screen">
+ <div class="kitchen"><div class="kbar"><b>Kitchen Terminal</b><button onclick="showFloor()">กลับ POS</button><div class="spacer"></div><div id="kFilters" class="tabs"></div></div><div class="kgrid" id="kgrid"></div></div>
+</section>
+
+<section id="boScreen" class="screen">
+ <div class="bo"><div class="actions"><button class="btn" onclick="showFloor()">← กลับหน้าร้าน</button><h2>หลังบ้าน — Clean Core</h2></div>
+ <div class="boGrid">
+  <div class="panel boCard"><h3>เมนู / ราคา / ครัว</h3><div id="menuAdmin"></div><button class="btn" onclick="addMenu()">＋ เพิ่มเมนู</button></div>
+  <div class="panel boCard"><h3>ระบบ</h3><p>ไฟล์นี้ใช้ Store เดียว ไม่มี UI รุ่นเก่าซ้อน ไม่มี patch chain</p><button class="btn" onclick="exportData()">สำรองข้อมูล JSON</button><button class="btn" onclick="systemCheck()">ตรวจ Core</button><pre id="checkOut"></pre></div>
+ </div></div>
+</section>
+</div>
+<div id="printArea"></div>
+
+<script>
+const STORAGE='hopf_clean_v1';
+const DEFAULT_MENU=[
+{id:'m1',name:'Ribeye Steak',price:399,cat:'อาหารหลัก',station:'HOT'},
+{id:'m2',name:'BBQ Ribs',price:299,cat:'อาหารหลัก',station:'HOT'},
+{id:'m3',name:'Pizza Salmon',price:189,cat:'พิซซ่า',station:'PIZZA'},
+{id:'m4',name:'French Fries',price:89,cat:'ของทานเล่น',station:'HOT'},
+{id:'m5',name:'ยำแซลมอน',price:159,cat:'ยำ/ส้มตำ',station:'YUM'},
+{id:'m6',name:'IPA 500 ml',price:189,cat:'เครื่องดื่ม',station:'BAR'},
+{id:'m7',name:'Lager 500 ml',price:149,cat:'เครื่องดื่ม',station:'BAR'},
+{id:'m8',name:'Weizen Dunkel',price:179,cat:'เครื่องดื่ม',station:'BAR'},
+{id:'m9',name:'Stout',price:179,cat:'เครื่องดื่ม',station:'BAR'}
+];
+function initial(){
+ const tables=[];for(let i=1;i<=24;i++)tables.push({id:'T'+i,zone:'MAIN',status:'FREE'});
+ for(let i=1;i<=6;i++)tables.push({id:'C'+i,zone:'C',status:'FREE'});
+ for(let i=1;i<=6;i++)tables.push({id:'S'+i,zone:'OUTDOOR',status:'FREE'});
+ for(let i=1;i<=3;i++)tables.push({id:'Room'+i,zone:'VIP',status:'FREE'});
+ return {v:1,seq:1,menu:DEFAULT_MENU,tables,bills:[],kds:[],payments:[],settings:{vat:7,service:0}};
+}
+let S=(()=>{try{return JSON.parse(localStorage.getItem(STORAGE))||initial()}catch(e){return initial()}})();
+let ui={zone:'MAIN',cat:'เครื่องดื่ม',billId:null,kStation:'ALL',kView:'ACTIVE',armed:null};
+function save(){localStorage.setItem(STORAGE,JSON.stringify(S))}
+function uid(p){return p+'-'+Date.now().toString(36)+'-'+(S.seq++).toString(36)}
+function bill(){return S.bills.find(x=>x.id===ui.billId)}
+function activeBillFor(t){return S.bills.find(x=>x.table===t&&!['CLOSED','VOID'].includes(x.status))}
+function screen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function showFloor(){screen('floorScreen');renderFloor()} function showPOS(){if(!bill()){alert('เลือกโต๊ะก่อน');return}screen('posScreen');renderPOS()}
+function showKitchen(){screen('kitchenScreen');renderKitchen()} function showBO(){screen('boScreen');renderBO()}
+function openTable(id){let b=activeBillFor(id);if(!b){let pax=Number(prompt('จำนวนลูกค้า','2')||2);b={id:uid('B'),table:id,pax,status:'OPEN',createdAt:new Date().toISOString(),draft:[],sent:[]};S.bills.push(b);S.tables.find(x=>x.id===id).status='OPEN';save()}ui.billId=b.id;showPOS()}
+function renderFloor(){
+ const zones=[['MAIN','โซนหลัก'],['C','Zone C'],['OUTDOOR','Outdoor'],['VIP','VIP']];
+ zoneTabs.innerHTML=zones.map(z=>`<button class="${ui.zone===z[0]?'active':''}" onclick="ui.zone='${z[0]}';renderFloor()">${z[1]}</button>`).join('');
+ floor.innerHTML=S.tables.filter(t=>t.zone===ui.zone).map(t=>`<div class="table ${t.status}" onclick="openTable('${t.id}')"><b>${t.id}</b><small>${t.status==='FREE'?'ว่าง':t.status}</small></div>`).join('');
+}
+function renderPOS(){
+ const b=bill();if(!b){showFloor();return}cartTable.textContent=b.table;pax.textContent=b.pax;
+ const cats=[...new Set(S.menu.map(x=>x.cat))];if(!cats.includes(ui.cat))ui.cat=cats[0];
+ document.getElementById('cats').innerHTML=cats.map(c=>`<button class="${ui.cat===c?'active':''}" onclick="ui.cat='${c}';renderPOS()">${c}</button>`).join('');
+ products.innerHTML=S.menu.filter(x=>x.cat===ui.cat).map(m=>`<div class="product" onclick="addItem('${m.id}')"><b>${m.name}</b><small>${stationLabel(m.station)}</small><span class="price">${m.price.toLocaleString()}.-</span></div>`).join('');
+ cartRows.innerHTML=b.draft.length?b.draft.map((x,i)=>`<div class="cartRow"><div><b>${x.name}</b><small>${stationLabel(x.station)}</small><input class="note" value="${esc(x.note||'')}" placeholder="หมายเหตุครัว" onchange="noteItem('${x.id}',this.value)"></div><div class="qty"><button onclick="qty('${x.id}',-1)">−</button><b>${x.qty}</b><button onclick="qty('${x.id}',1)">+</button><span>${(x.qty*x.price).toLocaleString()}</span></div></div>`).join(''):'<div style="padding:35px;text-align:center;color:#7e8994">ยังไม่มีรายการใหม่</div>';
+ total.textContent=money(b.sent.reduce((n,x)=>n+x.qty*x.price,0)+b.draft.reduce((n,x)=>n+x.qty*x.price,0));
+ context.textContent='โต๊ะ '+b.table+' · Bill '+b.id;
+}
+function addItem(id){let b=bill(),m=S.menu.find(x=>x.id===id);let x=b.draft.find(x=>x.menuId===id&&!(x.note||''));if(x)x.qty++;else b.draft.push({id:uid('I'),menuId:id,name:m.name,price:m.price,qty:1,station:m.station,note:''});save();renderPOS()}
+function qty(id,d){let b=bill(),x=b.draft.find(x=>x.id===id);if(!x)return;x.qty+=d;if(x.qty<=0)b.draft=b.draft.filter(x=>x.id!==id);save();renderPOS()}
+function noteItem(id,v){let x=bill().draft.find(x=>x.id===id);if(x){x.note=v;save()}}
+function setPax(){let b=bill(),n=Number(prompt('จำนวนลูกค้า',b.pax));if(n>0){b.pax=n;save();renderPOS()}}
+function sendOrder(){
+ let b=bill();if(!b||!b.draft.length)return;
+ const batch=uid('BAT'),at=new Date().toISOString(),items=b.draft.splice(0);
+ items.forEach(x=>{x.batchId=batch;x.sentAt=at;b.sent.push(x);if(x.station!=='BAR')S.kds.push({id:uid('K'),billId:b.id,table:b.table,batchId:batch,itemId:x.id,name:x.name,qty:x.qty,note:x.note,station:x.station,status:'NEW',orderAt:at,printCount:0})});
+ b.status='ORDERED';S.tables.find(t=>t.id===b.table).status='ORDERED';save();renderPOS();alert('ส่งออเดอร์แล้ว · Batch '+batch);
+}
+function billTotal(b){return b.sent.reduce((n,x)=>n+x.qty*x.price,0)+b.draft.reduce((n,x)=>n+x.qty*x.price,0)}
+function pay(method){
+ let b=bill();if(!b)return;if(b.draft.length){alert('ยังมีรายการที่ยังไม่ได้ส่งครัว');return}
+ const amount=billTotal(b);if(!amount){alert('บิลว่าง');return}
+ if(!confirm(`รับชำระ ${money(amount)} ด้วย ${method} ?`))return;
+ const key='FULL:'+b.id;if(S.payments.some(p=>p.key===key)){alert('บิลนี้ชำระแล้ว');return}
+ S.payments.push({id:uid('P'),key,billId:b.id,method,amount,at:new Date().toISOString()});b.status='CLOSED';b.closedAt=new Date().toISOString();S.tables.find(t=>t.id===b.table).status='FREE';save();printReceipt(b,method);ui.billId=null;showFloor();
+}
+function splitPay(){alert('Clean Core: Split Payment จะต่อหลังทดสอบ Full Payment ผ่านก่อน')}
+function stationLabel(s){return {HOT:'ครัวร้อน/ผัดทอด',YUM:'ครัวยำ',PIZZA:'ครัว Pizza',BAR:'Bar'}[s]||s}
+function kitchenRows(){let a=S.kds.filter(k=>ui.kView==='HISTORY'?k.status==='SERVED':k.status!=='SERVED');if(ui.kStation!=='ALL')a=a.filter(k=>k.station===ui.kStation);return a.sort((a,b)=>new Date(a.orderAt)-new Date(b.orderAt))}
+function renderKitchen(){
+ const filters=[['ALL','ทั้งหมด'],['HOT','🔥 ครัวร้อน'],['YUM','🌶 ครัวยำ'],['PIZZA','🍕 Pizza']];
+ kFilters.innerHTML=filters.map(x=>`<button class="${ui.kStation===x[0]?'active':''}" onclick="ui.kStation='${x[0]}';ui.kView='ACTIVE';renderKitchen()">${x[1]}</button>`).join('')+`<button class="${ui.kView==='HISTORY'?'active':''}" onclick="ui.kView='HISTORY';renderKitchen()">ประวัติ</button>`;
+ kgrid.innerHTML=kitchenRows().map(k=>`<div class="ticket ${k.status}" onclick="ticketTap('${k.id}')"><h3>โต๊ะ ${k.table} · ${k.batchId}</h3><div class="station">${stationLabel(k.station)}</div><div>${fmt(k.orderAt)} · <span class="age">รอ ${age(k.orderAt)} นาที</span></div><hr><b>${k.qty} × ${k.name}</b>${k.note?`<div>หมายเหตุ: ${esc(k.note)}</div>`:''}<div>สถานะ: ${k.status}</div>${k.status==='NEW'?`<button class="btn" onclick="event.stopPropagation();kState('${k.id}','COOKING')">เริ่มทำ</button>`:''}${k.status==='COOKING'?`<button class="btn" onclick="event.stopPropagation();kState('${k.id}','READY')">พร้อมเสิร์ฟ</button>`:''}${k.status==='READY'?`<button class="btn" onclick="event.stopPropagation();kState('${k.id}','SERVED')">เสิร์ฟแล้ว</button>`:''}${k.printCount?`<button class="btn" onclick="event.stopPropagation();reprint('${k.id}')">พิมพ์ซ้ำ · REPRINT ${k.printCount+1}</button>`:''}</div>`).join('')||'<div class="panel" style="padding:20px">ไม่มีออเดอร์</div>';
+}
+function ticketTap(id){let k=S.kds.find(x=>x.id===id);if(!k||k.status==='SERVED')return;if(ui.armed!==id){ui.armed=id;alert('เลือกบิลแล้ว · กดบิลเดิมอีกครั้งเพื่อพิมพ์ Checker');return}ui.armed=null;if(!k.printCount){k.printCount=1;save();printChecker(k)}}
+function reprint(id){let k=S.kds.find(x=>x.id===id);k.printCount=Math.max(1,k.printCount)+1;save();printChecker(k)}
+function kState(id,state){let k=S.kds.find(x=>x.id===id);if(!k)return;k.status=state;k[state.toLowerCase()+'At']=new Date().toISOString();let b=S.bills.find(x=>x.id===k.billId);if(b&&state==='READY'&&S.kds.filter(x=>x.billId===b.id&&x.status!=='SERVED').every(x=>x.status==='READY')){b.status='READY';S.tables.find(t=>t.id===b.table).status='READY'}save();renderKitchen()}
+function printChecker(k){printArea.innerHTML=`<b>HOPF AMATA<br>KITCHEN CHECKER</b><div class="pLine"></div><b>${stationLabel(k.station)}</b><div>โต๊ะ: ${k.table}</div><div>Batch: ${k.batchId}</div><div>เวลา: ${fmt(k.orderAt)}</div><div>พิมพ์ครั้งที่: ${k.printCount} ${k.printCount>1?'(REPRINT '+k.printCount+')':'(ต้นฉบับ)'}</div><div class="pLine"></div><b>${k.qty} x ${esc(k.name)}</b>${k.note?`<div>หมายเหตุ: ${esc(k.note)}</div>`:''}<div class="pLine"></div>`;window.print()}
+function printReceipt(b,method){printArea.innerHTML=`<b>HOPFADDICT AMATA</b><div>โต๊ะ ${b.table}</div><div>Bill ${b.id}</div><div class="pLine"></div>${b.sent.map(x=>`<div>${x.qty} x ${esc(x.name)} ${(x.qty*x.price).toLocaleString()}</div>`).join('')}<div class="pLine"></div><b>รวม ${money(billTotal(b))}</b><div>ชำระ: ${method}</div>`;window.print()}
+function renderBO(){menuAdmin.innerHTML=S.menu.map(m=>`<div class="listrow"><input value="${esc(m.name)}" onchange="editMenu('${m.id}','name',this.value)"><input type="number" value="${m.price}" onchange="editMenu('${m.id}','price',this.value)"><select onchange="editMenu('${m.id}','station',this.value)">${['HOT','YUM','PIZZA','BAR'].map(x=>`<option ${m.station===x?'selected':''}>${x}</option>`).join('')}</select><button class="btn" onclick="delMenu('${m.id}')">ลบ</button></div>`).join('')}
+function editMenu(id,k,v){let m=S.menu.find(x=>x.id===id);m[k]=k==='price'?Number(v):v;save()}function delMenu(id){if(confirm('ลบเมนู?')){S.menu=S.menu.filter(x=>x.id!==id);save();renderBO()}}
+function addMenu(){let n=prompt('ชื่อเมนู');if(!n)return;S.menu.push({id:uid('M'),name:n,price:0,cat:'อาหารหลัก',station:'HOT'});save();renderBO()}
+function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='hopf-pos-backup.json';a.click()}
+function systemCheck(){let dup=S.tables.filter(t=>S.bills.filter(b=>b.table===t.id&&!['CLOSED','VOID'].includes(b.status)).length>1);let paidOpen=S.bills.filter(b=>b.status!=='CLOSED'&&S.payments.some(p=>p.billId===b.id));checkOut.textContent=JSON.stringify({duplicateActiveTables:dup.map(x=>x.id),paidButOpen:paidOpen.map(x=>x.id),bills:S.bills.length,kds:S.kds.length,payments:S.payments.length},null,2)}
+function money(n){return Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}function fmt(x){return new Date(x).toLocaleString('th-TH')}function age(x){return Math.max(0,Math.floor((Date.now()-new Date(x))/60000))}function esc(x){return String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+setInterval(()=>{clock.textContent=new Date().toLocaleString('th-TH');if(kitchenScreen.classList.contains('active'))renderKitchen()},30000);
+renderFloor();clock.textContent=new Date().toLocaleString('th-TH');
+</script>
+</body></html>
